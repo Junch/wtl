@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "MainDlg.h"
+#include "atlstr.h"
 
 
 //
@@ -51,8 +52,10 @@ void MouseMove (int x, int y)
     ::SendInput(1,&Input,sizeof(INPUT));
 }
 
-LRESULT CMainDlg::OnStart(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+unsigned __stdcall workthread(void * args)
 {
+    HWND* hwnd = (HWND *)args;
+
     POINT pts[]= {{30, 20}, {200, 20}, {200, 300}, {30,300}};
 
     int i = 0;
@@ -60,12 +63,46 @@ LRESULT CMainDlg::OnStart(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, 
     {
         int j = i % 4;
         POINT pt = pts[j];
-        ClientToScreen(&pt);
+        ClientToScreen(*hwnd, &pt);
         MouseMove(pt.x, pt.y);
 
         Sleep(1000);
         ++i;
     }
+
+    _endthreadex(0);
+    return 0;
+}
+
+LRESULT CMainDlg::OnStart(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    unsigned threadID;
+    _beginthreadex( NULL, 0, &workthread, &m_hWnd, 0, &threadID );
+
+    //BOOL ret = BlockInput(TRUE);
+    //if (ret == 0)
+    //{
+    //    DWORD dw = GetLastError();
+    //    if (dw != 0)
+    //    {
+    //        LPVOID lpMsgBuf;
+    //        FormatMessage(
+    //            FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+    //            FORMAT_MESSAGE_FROM_SYSTEM |
+    //            FORMAT_MESSAGE_IGNORE_INSERTS,
+    //            NULL,
+    //            dw,
+    //            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+    //            (LPTSTR) &lpMsgBuf,
+    //            0,
+    //            NULL );
+
+    //        CString sz;
+    //        sz.Format(L"failed with error %d: %s", dw, (LPTSTR)lpMsgBuf);
+    //        LocalFree(lpMsgBuf);
+    //        MessageBox(sz);
+    //    }
+    //}
 
     return 0;
 }
