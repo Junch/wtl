@@ -1,0 +1,8 @@
+LIBRARY hook.dll
+EXPORTS
+  InstallHook @1
+  RemoveHook @2
+  KeyboardProc @3
+
+SECTIONS
+  .Shared READ WRITE SHARED
