@@ -64,8 +64,9 @@ unsigned __stdcall workthread(void * args)
         int j = i % 4;
         POINT pt = pts[j];
         ClientToScreen(*hwnd, &pt);
+        BlockInput(False);
         MouseMove(pt.x, pt.y);
-
+        BlockInput(True);
         Sleep(1000);
         ++i;
     }
