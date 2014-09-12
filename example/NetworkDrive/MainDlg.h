@@ -28,7 +28,7 @@ public:
     //	LRESULT CommandHandler(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
     //	LRESULT NotifyHandler(int /*idCtrl*/, LPNMHDR /*pnmh*/, BOOL& /*bHandled*/)
 
-    CMainDlg() :m_nwDrive(L"Z:"){
+    CMainDlg() :m_nwDrive(L"U:"){
 
     }
 
