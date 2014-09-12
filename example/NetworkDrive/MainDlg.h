@@ -12,12 +12,15 @@ public:
 
 	CComboBox m_SubDirs;
 	CEdit     m_RootDir;
+	CEdit     m_mappedDrive;
+	CString   m_szDrive;
 
 	BEGIN_MSG_MAP(CMainDlg)
 		MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
 		COMMAND_ID_HANDLER(IDOK, OnOK)
 		COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
 		COMMAND_HANDLER(IDC_COMBO_SUBDIRS, CBN_SELCHANGE, OnComboSelChange)
+		COMMAND_ID_HANDLER(IDC_BTN_UNMAP, OnUnMap)
 	END_MSG_MAP()
 
 // Handler prototypes (uncomment arguments if needed):
@@ -36,9 +39,16 @@ public:
 		HICON hIconSmall = AtlLoadIconImage(IDR_MAINFRAME, LR_DEFAULTCOLOR, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON));
 		SetIcon(hIconSmall, FALSE);
 		
+		m_szDrive = L"Z:";
+
 		m_RootDir.Attach(GetDlgItem(IDC_EDIT_ROOTDIR));
-		m_RootDir.SetWindowText(L"D:\\Temp");
+		m_RootDir.SetWindowText(L"\\\\localhost\\D$\\Temp");
 		m_SubDirs.Attach(GetDlgItem(IDC_COMBO_SUBDIRS));
+
+		m_mappedDrive.Attach(GetDlgItem(IDC_EDIT_MAPPED_DRIVE));
+		CString conn = GetConnection(m_szDrive.GetBuffer());
+		if (!conn.IsEmpty())
+			m_mappedDrive.SetWindowText(conn.GetBuffer());
 		
 		return TRUE;
 	}
@@ -89,7 +99,22 @@ public:
 		CString *p = (CString *)m_SubDirs.GetItemDataPtr(m_SubDirs.GetCurSel());
 		sz.Format(L"Current seletion is %d string=%s", m_SubDirs.GetCurSel(), p->GetBuffer());
 
-		MessageBox(sz.GetBuffer(), L"123", MB_OK);
+		AddConnection(p->GetBuffer(), m_szDrive.GetBuffer());
+		CString conn = GetConnection(m_szDrive.GetBuffer());
+		m_mappedDrive.SetWindowText(conn);
+
+		return 0;
+	}
+
+	LRESULT OnUnMap(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+	{
+		CString conn = GetConnection(m_szDrive.GetBuffer());
+		if (!conn.IsEmpty()){
+			CancelConnection(m_szDrive.GetBuffer());
+		}
+
+		conn = GetConnection(m_szDrive.GetBuffer());
+		m_mappedDrive.SetWindowText(conn);
 
 		return 0;
 	}
