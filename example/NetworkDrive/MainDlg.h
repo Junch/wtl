@@ -13,7 +13,7 @@ public:
 	CComboBox m_SubDirs;
 	CEdit     m_RootDir;
 	CEdit     m_mappedDrive;
-	CString   m_szDrive;
+	NetworkDrive m_nwDrive;
 
 	BEGIN_MSG_MAP(CMainDlg)
 		MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
@@ -28,6 +28,10 @@ public:
 //	LRESULT CommandHandler(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 //	LRESULT NotifyHandler(int /*idCtrl*/, LPNMHDR /*pnmh*/, BOOL& /*bHandled*/)
 
+	CMainDlg() :m_nwDrive(L"Z:"){
+		
+	}
+
 	LRESULT OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 	{
 		// center the dialog on the screen
@@ -39,14 +43,12 @@ public:
 		HICON hIconSmall = AtlLoadIconImage(IDR_MAINFRAME, LR_DEFAULTCOLOR, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON));
 		SetIcon(hIconSmall, FALSE);
 		
-		m_szDrive = L"Z:";
-
 		m_RootDir.Attach(GetDlgItem(IDC_EDIT_ROOTDIR));
 		m_RootDir.SetWindowText(L"\\\\localhost\\D$\\Temp");
 		m_SubDirs.Attach(GetDlgItem(IDC_COMBO_SUBDIRS));
 
 		m_mappedDrive.Attach(GetDlgItem(IDC_EDIT_MAPPED_DRIVE));
-		CString conn = GetConnection(m_szDrive.GetBuffer());
+		CString conn = m_nwDrive.GetConnection();
 		if (!conn.IsEmpty())
 			m_mappedDrive.SetWindowText(conn.GetBuffer());
 		
@@ -99,8 +101,8 @@ public:
 		CString *p = (CString *)m_SubDirs.GetItemDataPtr(m_SubDirs.GetCurSel());
 		sz.Format(L"Current seletion is %d string=%s", m_SubDirs.GetCurSel(), p->GetBuffer());
 
-		AddConnection(p->GetBuffer(), m_szDrive.GetBuffer());
-		CString conn = GetConnection(m_szDrive.GetBuffer());
+		m_nwDrive.AddConnection(p->GetBuffer());
+		CString conn = m_nwDrive.GetConnection();
 		m_mappedDrive.SetWindowText(conn);
 
 		return 0;
@@ -108,12 +110,12 @@ public:
 
 	LRESULT OnUnMap(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 	{
-		CString conn = GetConnection(m_szDrive.GetBuffer());
+		CString conn = m_nwDrive.GetConnection();
 		if (!conn.IsEmpty()){
-			CancelConnection(m_szDrive.GetBuffer());
+			m_nwDrive.CancelConnection();
 		}
 
-		conn = GetConnection(m_szDrive.GetBuffer());
+		conn = m_nwDrive.GetConnection();
 		m_mappedDrive.SetWindowText(conn);
 
 		return 0;

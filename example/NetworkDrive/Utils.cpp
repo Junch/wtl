@@ -42,40 +42,39 @@ bool isValidDir(const TCHAR* folder)
 	return bRet;
 }
 
-CString GetConnection(TCHAR* driveName)
-{
-	CString sz;
+NetworkDrive::NetworkDrive(TCHAR* szDrive) :m_szDrive(szDrive){
+
+}
+
+CString NetworkDrive::GetConnection(){
 	TCHAR buffer[MAX_PATH];
 	DWORD len = MAX_PATH;
-	DWORD ret = WNetGetConnection(driveName, buffer, &len);
+	DWORD ret = WNetGetConnection(m_szDrive.GetBuffer(), buffer, &len);
+
+	CString sz;
 	if (ret == NO_ERROR)
 		sz = buffer;
 
 	return sz;
 }
 
-void AddConnection(TCHAR* folder, TCHAR* driveName)
-{
+void NetworkDrive::AddConnection(TCHAR* folder){
 	NETRESOURCE nrs;
 	memset(&nrs, 0, sizeof(NETRESOURCE));
-	nrs.lpLocalName = driveName;
+	nrs.lpLocalName = m_szDrive.GetBuffer();
 	nrs.lpRemoteName = folder;
 
-	CString conn = GetConnection(driveName);
+	CString conn = GetConnection();
 	if (!conn.IsEmpty()) {
 		CString fmt;
-		fmt.Format(L"The %s has already mapped to %s. You need unmap it first.", driveName, conn.GetBuffer());
+		fmt.Format(L"The %s has already mapped to %s. You need unmap it first.", m_szDrive.GetBuffer(), conn.GetBuffer());
 		::MessageBox(NULL, fmt.GetBuffer(), L"Warning", MB_OK);
 		return;
 	}
 
-	if (WNetAddConnection2(&nrs, NULL, NULL, CONNECT_UPDATE_PROFILE) != NO_ERROR)
-	{
-		::MessageBox(NULL, L"Fail to connect", L"Warning", MB_OK);
-	}
+	WNetAddConnection2(&nrs, NULL, NULL, CONNECT_UPDATE_PROFILE);
 }
 
-void CancelConnection(TCHAR* driveName)
-{
-	WNetCancelConnection2(driveName, CONNECT_UPDATE_PROFILE, TRUE);
+void NetworkDrive::CancelConnection(){
+	WNetCancelConnection2(m_szDrive, CONNECT_UPDATE_PROFILE, TRUE);
 }
