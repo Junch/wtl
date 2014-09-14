@@ -13,6 +13,9 @@ public:
     CComboBox m_SubDirs;
     CEdit     m_RootDir;
     CEdit     m_mappedDrive;
+
+    CListBox  m_lsDirectories;
+    CEdit     m_editDirectory;
     NetworkDrive m_nwDrive;
 
     BEGIN_MSG_MAP(CMainDlg)
@@ -21,6 +24,8 @@ public:
         COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
         COMMAND_HANDLER(IDC_COMBO_SUBDIRS, CBN_SELCHANGE, OnComboSelChange)
         COMMAND_ID_HANDLER(IDC_BTN_UNMAP, OnUnMap)
+        COMMAND_ID_HANDLER(IDC_BUTTON_ADD, OnAdd)
+        COMMAND_HANDLER(IDC_LIST_DIRECTORY, LBN_SELCHANGE, OnSelChange)
     END_MSG_MAP()
 
     // Handler prototypes (uncomment arguments if needed):
@@ -52,6 +57,12 @@ public:
         CString conn = m_nwDrive.GetConnection();
         if (!conn.IsEmpty())
             m_mappedDrive.SetWindowText(conn.GetBuffer());
+
+        m_lsDirectories.Attach(GetDlgItem(IDC_LIST_DIRECTORY));
+        m_lsDirectories.AddString(L"C:\\Temp");
+        m_lsDirectories.AddString(L"C:\\Windows");
+
+        m_editDirectory.Attach(GetDlgItem(IDC_EDIT_DIRECTORY));
 
         return TRUE;
     }
@@ -121,6 +132,23 @@ public:
         conn = m_nwDrive.GetConnection();
         m_mappedDrive.SetWindowText(conn);
 
+        return 0;
+    }
+
+    LRESULT OnAdd(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+    {
+        CString szDirectory;
+        m_editDirectory.GetWindowText(szDirectory);
+
+        m_lsDirectories.AddString(szDirectory);
+
+
+        return 0;
+    }
+
+    LRESULT OnSelChange(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+    {
+        MessageBox(L"aaa", L"aaa", MB_OK);
         return 0;
     }
 
