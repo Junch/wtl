@@ -10,8 +10,6 @@ class CMainDlg : public CDialogImpl < CMainDlg >
 public:
     enum { IDD = IDD_MAINDLG };
 
-    CComboBox m_SubDirs;
-    CEdit     m_RootDir;
     CEdit     m_mappedDrive;
 
     CListBox  m_lsDirectories;
@@ -20,12 +18,12 @@ public:
 
     BEGIN_MSG_MAP(CMainDlg)
         MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
-        COMMAND_ID_HANDLER(IDOK, OnOK)
+        MESSAGE_HANDLER(WM_CONTEXTMENU, OnContextMenu);
         COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
-        COMMAND_HANDLER(IDC_COMBO_SUBDIRS, CBN_SELCHANGE, OnComboSelChange)
         COMMAND_ID_HANDLER(IDC_BTN_UNMAP, OnUnMap)
         COMMAND_ID_HANDLER(IDC_BUTTON_ADD, OnAdd)
-        COMMAND_HANDLER(IDC_LIST_DIRECTORY, LBN_SELCHANGE, OnSelChange)
+        COMMAND_ID_HANDLER(ID_MAP_DELETE, OnDelete)
+        COMMAND_ID_HANDLER(ID_MAP_MAP, OnMap)
     END_MSG_MAP()
 
     // Handler prototypes (uncomment arguments if needed):
@@ -48,89 +46,36 @@ public:
         HICON hIconSmall = AtlLoadIconImage(IDR_MAINFRAME, LR_DEFAULTCOLOR, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON));
         SetIcon(hIconSmall, FALSE);
 
-        CString rootDir = GetDefaultRootDir();
-        m_RootDir.Attach(GetDlgItem(IDC_EDIT_ROOTDIR));
-        m_RootDir.SetWindowText(rootDir);
-        m_SubDirs.Attach(GetDlgItem(IDC_COMBO_SUBDIRS));
+        m_lsDirectories.Attach(GetDlgItem(IDC_LIST_DIRECTORY));
+        m_lsDirectories.AddString(L"\\\\localhost\\d$\\Temp");
+        m_lsDirectories.AddString(L"\\\\localhost\\c$\\Temp");
+        m_lsDirectories.AddString(L"\\\\localhost\\e$\\Temp");
 
         m_mappedDrive.Attach(GetDlgItem(IDC_EDIT_MAPPED_DRIVE));
         CString conn = m_nwDrive.GetConnection();
-        if (!conn.IsEmpty())
+        if (!conn.IsEmpty()){
             m_mappedDrive.SetWindowText(conn.GetBuffer());
 
-        m_lsDirectories.Attach(GetDlgItem(IDC_LIST_DIRECTORY));
-        m_lsDirectories.AddString(L"C:\\Temp");
-        m_lsDirectories.AddString(L"C:\\Windows");
+            for (int i = 0, len = m_lsDirectories.GetCount(); i < len; ++i)
+            {
+                CString dir;
+                m_lsDirectories.GetText(i, dir);
+
+                if (0 == dir.CollateNoCase(conn)){
+                    m_lsDirectories.SetCurSel(i);
+                    break;
+                }
+            }
+        }
 
         m_editDirectory.Attach(GetDlgItem(IDC_EDIT_DIRECTORY));
 
         return TRUE;
     }
 
-    void clearSubDirs()
-    {
-        for (int i = m_SubDirs.GetCount() - 1; i >= 0; i--) {
-            m_SubDirs.DeleteString(i);
-        }
-    }
-
-    CString getRootDir()
-    {
-        CString szRootDir;
-        m_RootDir.GetWindowText(szRootDir);
-        szRootDir.Trim();
-        int length = szRootDir.GetLength();
-        if (length == 0)
-            return L"";
-
-        if (szRootDir[length - 1] == L'\\'){
-            szRootDir.Delete(length - 1, 1);
-        }
-
-        return szRootDir;
-    }
-
-    void populateSubDirs(CString& szRootDir)
-    {
-        if (isValidDir(szRootDir.GetBuffer()))
-        {
-            std::vector<CString> subdirs;
-            CString rootDir = szRootDir + "\\*";
-
-            getSubDirs(rootDir.GetBuffer(), subdirs);
-
-            for (size_t i = 0, nCount = subdirs.size(); i < nCount; ++i){
-                const CString& dir = subdirs[i];
-                m_SubDirs.AddString(dir);
-                m_SubDirs.SetItemDataPtr(i, new CString(szRootDir + "\\" + dir));
-            }
-
-            SetDefaultRootDir(szRootDir.GetBuffer());
-        }
-    }
-
-    LRESULT OnComboSelChange(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
-    {
-        CString sz;
-        CString *p = (CString *)m_SubDirs.GetItemDataPtr(m_SubDirs.GetCurSel());
-        sz.Format(L"Current seletion is %d string=%s", m_SubDirs.GetCurSel(), p->GetBuffer());
-
-        m_nwDrive.AddConnection(p->GetBuffer());
-        CString conn = m_nwDrive.GetConnection();
-        m_mappedDrive.SetWindowText(conn);
-
-        return 0;
-    }
-
     LRESULT OnUnMap(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
     {
-        CString conn = m_nwDrive.GetConnection();
-        if (!conn.IsEmpty()){
-            m_nwDrive.CancelConnection();
-        }
-
-        conn = m_nwDrive.GetConnection();
-        m_mappedDrive.SetWindowText(conn);
+        unMap();
 
         return 0;
     }
@@ -139,35 +84,85 @@ public:
     {
         CString szDirectory;
         m_editDirectory.GetWindowText(szDirectory);
-
-        m_lsDirectories.AddString(szDirectory);
-
-
-        return 0;
-    }
-
-    LRESULT OnSelChange(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
-    {
-        MessageBox(L"aaa", L"aaa", MB_OK);
-        return 0;
-    }
-
-    LRESULT OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
-    {
-        clearSubDirs();
-
-        CString szRootDir = getRootDir();
-        if (szRootDir.IsEmpty())
+        if (szDirectory.IsEmpty())
             return 0;
 
-        populateSubDirs(szRootDir);
-
+        m_lsDirectories.AddString(szDirectory);
         return 0;
     }
 
     LRESULT OnCancel(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
     {
         EndDialog(wID);
+        return 0;
+    }
+
+    bool isDirectoryMapped(CString szDir){
+        CString szConn = m_nwDrive.GetConnection();
+        return (0 == szConn.CollateNoCase(szDir));
+    }
+
+    CString getListBoxCurText()
+    {
+        CString szDir;
+        int sel = m_lsDirectories.GetCurSel();
+        m_lsDirectories.GetText(sel, szDir);
+        return szDir;
+    }
+
+    void unMap()
+    {
+        CString conn = m_nwDrive.GetConnection();
+        if (!conn.IsEmpty()){
+            m_nwDrive.CancelConnection();
+        }
+
+        conn = m_nwDrive.GetConnection();
+        m_mappedDrive.SetWindowText(conn);
+    }
+
+    void map(CString szDir)
+    {
+        m_nwDrive.AddConnection(szDir.GetBuffer());
+        CString conn = m_nwDrive.GetConnection();
+        m_mappedDrive.SetWindowText(conn);
+    }
+
+    LRESULT OnContextMenu(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/)
+    {
+        if (m_lsDirectories.m_hWnd != (HWND)wParam)
+            return 0;
+
+        CMenu menu;
+        menu.LoadMenu(IDR_MENU_CONTEXT);
+        CMenuHandle menuPopup = menu.GetSubMenu(0);
+
+        CString szDir = getListBoxCurText();
+        if (isDirectoryMapped(szDir))
+            menuPopup.ModifyMenu(ID_MAP_MAP, MF_BYCOMMAND | MF_STRING, ID_MAP_MAP, L"UnMap");
+
+        menuPopup.TrackPopupMenu(TPM_RIGHTBUTTON, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), m_hWnd, 0);
+
+        return 0;
+    }
+
+    LRESULT OnDelete(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+    {
+        int sel = m_lsDirectories.GetCurSel();
+        m_lsDirectories.DeleteString(sel);
+        return 0;
+    }
+
+    LRESULT OnMap(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+    {
+        CString szDir = getListBoxCurText();
+        if (isDirectoryMapped(szDir)){
+            unMap();
+        }
+        else{
+            map(szDir);
+        }
+
         return 0;
     }
 };
