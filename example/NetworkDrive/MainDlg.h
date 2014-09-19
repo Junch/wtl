@@ -4,6 +4,7 @@
 
 #pragma once
 #include "Utils.h"
+#include "Settings.h"
 
 class CMainDlg : public CDialogImpl < CMainDlg >
 {
@@ -72,7 +73,7 @@ public:
     }
 
     void loadDirectories(){
-        Setting ss;
+        Settings ss;
         ss.load();
 
         std::vector<CString> dirs;
@@ -105,7 +106,7 @@ public:
     {
         EndDialog(wID);
 
-        Setting ss;
+        Settings ss;
         for (int i = 0, len = m_lsDirectories.GetCount(); i < len; ++i)
         {
             CString szDir;
