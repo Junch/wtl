@@ -47,9 +47,7 @@ public:
         SetIcon(hIconSmall, FALSE);
 
         m_lsDirectories.Attach(GetDlgItem(IDC_LIST_DIRECTORY));
-        m_lsDirectories.AddString(L"\\\\localhost\\d$\\Temp");
-        m_lsDirectories.AddString(L"\\\\localhost\\c$\\Temp");
-        m_lsDirectories.AddString(L"\\\\localhost\\e$\\Temp");
+        loadDirectories();
 
         m_mappedDrive.Attach(GetDlgItem(IDC_EDIT_MAPPED_DRIVE));
         CString conn = m_nwDrive.GetConnection();
@@ -73,6 +71,18 @@ public:
         return TRUE;
     }
 
+    void loadDirectories(){
+        Setting ss;
+        ss.load();
+
+        std::vector<CString> dirs;
+        ss.getDirs(dirs);
+
+        for (CString& dir : dirs){
+            m_lsDirectories.AddString(dir.GetBuffer());
+        }
+    }
+
     LRESULT OnUnMap(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
     {
         unMap();
@@ -94,6 +104,17 @@ public:
     LRESULT OnCancel(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
     {
         EndDialog(wID);
+
+        Setting ss;
+        for (int i = 0, len = m_lsDirectories.GetCount(); i < len; ++i)
+        {
+            CString szDir;
+            m_lsDirectories.GetText(i, szDir);
+            ss.addDir(szDir);
+        }
+
+        ss.save();
+
         return 0;
     }
 
