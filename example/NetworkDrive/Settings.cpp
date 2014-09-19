@@ -2,15 +2,13 @@
 #include "Settings.h"
 #include <rapidjson\document.h>
 #include <rapidjson\prettywriter.h>
-#include <rapidjson\writer.h>
-#include <rapidjson\stringbuffer.h>
-#include <rapidjson\encodings.h>
 #include "rapidjson\filereadstream.h"
 #include "rapidjson\filewritestream.h"
-#include "rapidjson\encodedstream.h"
-#include <string>
-#include <fstream>
+
 using namespace rapidjson;
+
+// rapidjson documentation
+// http://miloyip.github.io/rapidjson/
 
 typedef GenericDocument<UTF16<>> WDocument;
 typedef GenericValue<UTF16<>> WValue;
@@ -30,38 +28,20 @@ void Settings::removeDir(CString dir){
         m_Dirs.erase(iter);
 }
 
-//void Utf8ToUnicode(WCHAR** dest, const char* src)
-//{
-//    ATLASSERT(dest != NULL || src != NULL);
-//    int unicodeLen = ::MultiByteToWideChar(CP_UTF8, 0, src, -1, NULL, 0) + 1;
-//
-//    *dest = new WCHAR[unicodeLen];
-//    ::MultiByteToWideChar(CP_UTF8, 0, src, -1, *dest, unicodeLen);
-//}
-
 void Settings::load(){
     WDocument d;
     d.SetObject();
 
-    std::string ss;
-    std::ifstream testfile;
-    testfile.open("d:\\hello.json", std::ios::in | std::ios::binary);
-    testfile >> ss;
-    testfile.close();
+    FILE* fp = NULL;
+    errno_t err = _wfopen_s(&fp, L"d:\\hello.json", L"rb");
+    if (err != 0)
+        return;
 
-    //The code do the same as as the StringStream below.
-    //wchar_t *dest = NULL;
-    //Utf8ToUnicode(&dest, ss.c_str());
-    //d.Parse<0>(dest);
-    //delete[] dest;
+    char buffer[1024];
+    FileReadStream is(fp, buffer, sizeof(buffer));
+    d.ParseStream<0, UTF8<>, FileReadStream>(is);
+    fclose(fp);
 
-    StringStream s(ss.c_str());
-    GenericStringBuffer<UTF16<>> buffer;
-    Writer<GenericStringBuffer<UTF16<>>, UTF16<>, UTF16<> > writer(buffer);
-    GenericReader<UTF8<>, UTF16<>> reader;
-    reader.Parse<0>(s, writer);
-
-    d.Parse<0>(buffer.GetString());
     if (d.HasMember(L"drive")){
         WValue& v = d[L"drive"];
         CString s = v.GetString();
@@ -91,14 +71,16 @@ void Settings::save(){
     d.AddMember(L"drive", L"U:", alloc);
     d.AddMember(L"dirs", arr, alloc);
 
-    StringBuffer buffer;
-    Writer<StringBuffer, UTF16<>> writer(buffer);
-    //PrettyWriter<StringBuffer, UTF16<>> writer(buffer);
-    d.Accept(writer);
-    const char* r = buffer.GetString();
+    FILE* fp = NULL;
+    errno_t err = _wfopen_s(&fp, L"d:\\hello.json", L"wb");
+    if (err != 0)
+        return;
 
-    std::wofstream of;
-    of.open("d:\\hello.json", std::ios::out | std::ios::binary);
-    of << r;
-    of.close();
+    char buffer[1024];
+    FileWriteStream os(fp, buffer, sizeof(buffer));
+    //Writer<FileWriteStream, UTF16<>> writer(os);
+    PrettyWriter<FileWriteStream, UTF16<>> writer(os);
+
+    d.Accept(writer);
+    fclose(fp);
 }
