@@ -11,11 +11,11 @@ class CMainDlg : public CDialogImpl < CMainDlg >
 public:
     enum { IDD = IDD_MAINDLG };
 
-    CEdit     m_mappedDrive;
-
-    CListBox  m_lsDirectories;
-    CEdit     m_editDirectory;
-    NetworkDrive m_nwDrive;
+    CEdit           m_mappedDrive;
+    CListBox        m_lsDirectories;
+    CEdit           m_editDirectory;
+    NetworkDrive    m_nwDrive;
+    Settings        m_settings;
 
     BEGIN_MSG_MAP(CMainDlg)
         MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
@@ -73,11 +73,10 @@ public:
     }
 
     void loadDirectories(){
-        Settings ss;
-        ss.load();
+        m_settings.load();
 
         std::vector<CString> dirs;
-        ss.getDirs(dirs);
+        m_settings.getDirs(dirs);
 
         for (CString& dir : dirs){
             m_lsDirectories.AddString(dir.GetBuffer());
@@ -99,23 +98,14 @@ public:
             return 0;
 
         m_lsDirectories.AddString(szDirectory);
+        m_settings.addDir(szDirectory);
+        m_settings.save();
         return 0;
     }
 
     LRESULT OnCancel(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
     {
         EndDialog(wID);
-
-        Settings ss;
-        for (int i = 0, len = m_lsDirectories.GetCount(); i < len; ++i)
-        {
-            CString szDir;
-            m_lsDirectories.GetText(i, szDir);
-            ss.addDir(szDir);
-        }
-
-        ss.save();
-
         return 0;
     }
 
@@ -171,7 +161,11 @@ public:
     LRESULT OnDelete(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
     {
         int sel = m_lsDirectories.GetCurSel();
+        CString sz = getListBoxCurText();
         m_lsDirectories.DeleteString(sel);
+      
+        m_settings.removeDir(sz);
+        m_settings.save();
         return 0;
     }
 

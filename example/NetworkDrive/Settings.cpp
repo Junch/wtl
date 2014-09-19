@@ -13,6 +13,17 @@ using namespace rapidjson;
 typedef GenericDocument<UTF16<>> WDocument;
 typedef GenericValue<UTF16<>> WValue;
 
+Settings::Settings(){
+    TCHAR buffer[MAX_PATH];
+    GetModuleFileName(NULL, buffer, sizeof(buffer));
+    CString szFileName(buffer);
+    int index = szFileName.ReverseFind('\\');
+    buffer[index] = L'\0';
+
+    m_fileName = CString(buffer) + L"\\settings.json";
+    m_drive = L"U:";
+}
+
 void
 Settings::getDirs(std::vector<CString>& dirs){
     dirs = m_Dirs;
@@ -33,7 +44,7 @@ void Settings::load(){
     d.SetObject();
 
     FILE* fp = NULL;
-    errno_t err = _wfopen_s(&fp, L"d:\\hello.json", L"rb");
+    errno_t err = _wfopen_s(&fp, m_fileName.GetBuffer(), L"rb");
     if (err != 0)
         return;
 
@@ -68,11 +79,13 @@ void Settings::save(){
         WValue str(dir.GetBuffer(), dir.GetLength());
         arr.PushBack(str, alloc);
     }
-    d.AddMember(L"drive", L"U:", alloc);
+
+    WValue szDrive(m_drive.GetBuffer(), m_drive.GetLength());
+    d.AddMember(L"drive", szDrive, alloc);
     d.AddMember(L"dirs", arr, alloc);
 
     FILE* fp = NULL;
-    errno_t err = _wfopen_s(&fp, L"d:\\hello.json", L"wb");
+    errno_t err = _wfopen_s(&fp, m_fileName.GetBuffer(), L"wb");
     if (err != 0)
         return;
 
