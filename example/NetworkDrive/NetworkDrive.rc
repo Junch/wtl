@@ -58,7 +58,7 @@ IDR_MAINFRAME           ICON                    "res\\NetworkDrive.ico"
 // Dialog
 //
 
-IDD_MAINDLG DIALOGEX 0, 0, 265, 132
+IDD_MAINDLG DIALOGEX 0, 0, 265, 144
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU
 CAPTION "NetworkDrive"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
@@ -86,7 +86,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 258
         TOPMARGIN, 7
-        BOTTOMMARGIN, 125
+        BOTTOMMARGIN, 137
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -165,6 +165,15 @@ BEGIN
     BEGIN
         MENUITEM "Delete",                      ID_MAP_DELETE
         MENUITEM "Map",                         ID_MAP_MAP
+    END
+END
+
+IDR_MENU_APP MENU
+BEGIN
+    POPUP "Dialogs"
+    BEGIN
+        MENUITEM "Show 'Drive connection'",     ID_DIALOGS_SHOW_CONNECTION
+        MENUITEM "Show 'Drive Disconnection'",  ID_DIALOGS_SHOW_DISCONNECTION
     END
 END
 

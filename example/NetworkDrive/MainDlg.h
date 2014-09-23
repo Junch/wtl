@@ -16,6 +16,7 @@ public:
     CEdit           m_editDirectory;
     NetworkDrive    m_nwDrive;
     Settings        m_settings;
+    CMenu           m_menu;
 
     BEGIN_MSG_MAP(CMainDlg)
         MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
@@ -25,6 +26,8 @@ public:
         COMMAND_ID_HANDLER(IDC_BUTTON_ADD, OnAdd)
         COMMAND_ID_HANDLER(ID_MAP_DELETE, OnDelete)
         COMMAND_ID_HANDLER(ID_MAP_MAP, OnMap)
+        COMMAND_ID_HANDLER(ID_DIALOGS_SHOW_CONNECTION, OnShowConnection)
+        COMMAND_ID_HANDLER(ID_DIALOGS_SHOW_DISCONNECTION, OnShowConnection)
     END_MSG_MAP()
 
     // Handler prototypes (uncomment arguments if needed):
@@ -46,6 +49,9 @@ public:
         SetIcon(hIcon, TRUE);
         HICON hIconSmall = AtlLoadIconImage(IDR_MAINFRAME, LR_DEFAULTCOLOR, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON));
         SetIcon(hIconSmall, FALSE);
+
+        m_menu.Attach(LoadMenu(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDR_MENU_APP)));
+        SetMenu(m_menu);
 
         m_lsDirectories.Attach(GetDlgItem(IDC_LIST_DIRECTORY));
         loadDirectories();
@@ -178,6 +184,16 @@ public:
         else{
             map(szDir);
         }
+
+        return 0;
+    }
+
+    LRESULT OnShowConnection(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+    {
+        if (wID == ID_DIALOGS_SHOW_CONNECTION)
+            WNetConnectionDialog(m_hWnd, RESOURCETYPE_DISK);
+        else if (wID == ID_DIALOGS_SHOW_DISCONNECTION)
+            WNetDisconnectDialog(m_hWnd, RESOURCETYPE_DISK);
 
         return 0;
     }
